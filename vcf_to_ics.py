@@ -83,9 +83,19 @@ else:
     sys.exit(1)
 
 # Read VCF file content
-fileInput = open(sInputPath, 'r', encoding='utf-8')
-sFileContent = fileInput.read()
-fileInput.close()
+# VCF files exported on Windows (e.g. Outlook) are often encoded in
+# latin-1 instead of UTF-8, so fall back to latin-1 rather than crash
+# with a UnicodeDecodeError traceback.
+try:
+    fileInput = open(sInputPath, 'r', encoding='utf-8')
+    sFileContent = fileInput.read()
+    fileInput.close()
+except UnicodeDecodeError:
+    # latin-1 maps every byte value, so this cannot fail
+    logger.warning("Input file is not valid UTF-8, retrying with latin-1 encoding")
+    fileInput = open(sInputPath, 'r', encoding='latin-1')
+    sFileContent = fileInput.read()
+    fileInput.close()
 
 # Separate VCards
 sVCards = sFileContent.split("END:VCARD")
